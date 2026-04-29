@@ -20,6 +20,27 @@ An initial data population was implemented using Spring Boot's `CommandLineRunne
 - **Controller**: The `BookController` handles the POST request to `/books`. It uses `@Valid` to enforce constraints (e.g., non-blank title, valid year).
 - **Exception Handling**: Integrity violations (like database constraints) during the save operation are caught, and a user-friendly error message is displayed on the form.
 
+**Code Snippet: Controller Save Method**
+```java
+@PostMapping("/books")
+public String saveBook(@Valid @ModelAttribute("book") Book book, BindingResult result, Model model) {
+    if (result.hasErrors()) {
+        model.addAttribute("authors", authorService.findAll());
+        return "book-form";
+    }
+    try {
+        bookService.save(book);
+    } catch (Exception e) {
+        model.addAttribute("authors", authorService.findAll());
+        model.addAttribute("errorMessage", "An integrity violation occurred while saving the book.");
+        return "book-form";
+    }
+    return "redirect:/books";
+}
+```
+**Screenshot: Add Book Page**
+![Add Book](add-book.png)
+
 ### 3.3 Read Operation
 - **View**: The `list-books.jsp` page displays all books in a styled HTML table using the JSTL `<c:forEach>` tag.
 - **Controller**: The `listBooks` method fetches data and binds it to the model.
@@ -27,9 +48,20 @@ An initial data population was implemented using Spring Boot's `CommandLineRunne
   `@Query("SELECT b FROM Book b JOIN FETCH b.author")`
   This performs an inner join fetch to retrieve books and their associated authors in a single query, preventing the N+1 select problem.
 
+**Code Snippet: Custom Query**
+```java
+@Query("SELECT b FROM Book b JOIN FETCH b.author")
+List<Book> findAllWithAuthor();
+```
+**Screenshot: List Books Page**
+![List Books](list-books.png)
+
 ### 3.4 Update Operation
 - **View**: The same `book-form.jsp` is re-used for updating. The form fields are pre-populated with the selected book's data.
 - **Controller**: A GET method to `/books/edit/{id}` loads the book details. A POST method to `/books/update/{id}` saves the updated information back to the database, utilizing the same exception handling mechanism.
+
+**Screenshot: Edit Book Page**
+![Edit Book](edit-book.png)
 
 ### 3.5 Testing
 Unit tests were written using **JUnit 5** and **Mockito**.
